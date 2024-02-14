@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 import os
 from GeneratePassword import generate_mdp 
 
-app = Flask(__name__, template_folder='../Front/template')
+app = Flask(__name__, template_folder='../Front/template', static_folder='../Front/static')
 
 base_de_donnees = os.path.join(app.root_path, 'BDD/DB.sqlite')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + base_de_donnees
@@ -28,6 +28,14 @@ def index():
 @app.route('/generatePassword')
 def generate_password_page():
     return render_template('generatePassword.html')
+
+@app.route('/Login')
+def Login_page():
+    return render_template('Login.html')
+
+@app.route('/Register')
+def Register_page():
+    return render_template('Register.html')
 
 @app.route('/generatePassword/generate', methods=['POST'])
 def generate_password():
