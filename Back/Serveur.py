@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 import os
 import hashlib
@@ -8,6 +8,7 @@ app = Flask(__name__, template_folder='../Front/template', static_folder='../Fro
 base_de_donnees = os.path.join(app.root_path, '../BDD/DB.sqlite')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + base_de_donnees
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = 'azerty'
 
 db = SQLAlchemy(app)
 
@@ -39,16 +40,53 @@ def index():
 
 @app.route('/generatePassword')
 def generate_password_page():
-    posts = Post.query.all()  
-    return render_template('generatePassword.html', posts=posts)  
+    if 'user_id' in session:
+        user_id = session['user_id']
+        user_posts = Post.query.filter_by(idUser=user_id).all()
+        return render_template('generatePassword.html', posts=user_posts)
+    else:
+        return redirect(url_for('Login_page'))
 
 @app.route('/Login')
 def Login_page():
     return render_template('Login.html')
 
+@app.route('/login', methods=['POST'])
+def login():
+    email = request.form.get('email')
+    password = request.form.get('password')
+
+    user = User.query.filter_by(email=email).first()
+
+    if user and user.mdp == hash_password(password):
+        session['user_id'] = user.idUser
+        return redirect(url_for('generate_password_page'))
+    else:
+        return render_template('Login.html', error='Invalid email or password.')
+
+
 @app.route('/Register')
 def Register_page():
     return render_template('Register.html')
+
+@app.route('/Register', methods=['POST'])
+def register():
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    email = request.form.get('email')
+    password = request.form.get('password')
+
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return redirect(url_for('Register_page'))  
+    
+    hashed_password = hash_password(password)
+
+    new_user = User(prénom=first_name, nom=last_name, email=email, mdp=hashed_password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return redirect(url_for('Login_page')) 
 
 @app.route('/generatePassword/generate', methods=['POST'])
 def generate_password():
@@ -62,16 +100,18 @@ def create_post():
     site = request.form.get('site')
     password = request.form['password']
 
-    user_id = 1
-
-    if site and password:
-        password = hash_password(password)  
-        new_post = Post(idUser=user_id, site=site, password=password)
-        db.session.add(new_post)
-        db.session.commit()
-        return redirect(url_for('generate_password_page'))
+    if 'user_id' in session:
+        user_id = session['user_id']
+        if site and password:
+            password = hash_password(password)  
+            new_post = Post(idUser=user_id, site=site, password=password)
+            db.session.add(new_post)
+            db.session.commit()
+            return redirect(url_for('generate_password_page'))
+        else:
+            return render_template('generatePassword.html', error="Veuillez fournir un nom de site et un mot de passe.")
     else:
-        return render_template('generatePassword.html', error="Veuillez fournir un nom de site et un mot de passe.")
+        return redirect(url_for('Login_page'))
 
 if __name__ == '__main__':
     app.run(debug=True)
