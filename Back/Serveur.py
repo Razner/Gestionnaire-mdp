@@ -36,7 +36,7 @@ def get_plain_password(post_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('Register.html')
 
 @app.route('/generatePassword')
 def generate_password_page():
@@ -64,7 +64,6 @@ def login():
     else:
         return render_template('Login.html', error='Invalid email or password.')
 
-
 @app.route('/Register')
 def Register_page():
     return render_template('Register.html')
@@ -87,6 +86,11 @@ def register():
     db.session.commit()
 
     return redirect(url_for('Login_page')) 
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('Register_page'))
 
 @app.route('/generatePassword/generate', methods=['POST'])
 def generate_password():

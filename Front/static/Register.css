@@ -65,25 +65,11 @@ body {
     font-size: 20px;
 }
 
-.wrapper .remember-forgot {
+.wrapper {
     display: flex;
     justify-content: space-between;
     font-size: 14.5px;
     margin: -15px 0 15px;
-}
-
-.remember-forgot label input {
-    accent-color: #ffff;
-    margin-right: 3px;
-}
-
-.remember-forgot a {
-    color: #ffff;
-    text-decoration: none;
-}
-
-.remember-forgot a:hover {
-    text-decoration: underline;
 }
 
 .wrapper .btn {
